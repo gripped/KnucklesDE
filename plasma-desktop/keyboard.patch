@@ -1,0 +1,69 @@
+diff --color -Nuar a/applets/keyboardlayout/ipc/KeyboardLayoutSocket.cpp b/applets/keyboardlayout/ipc/KeyboardLayoutSocket.cpp
+--- a/applets/keyboardlayout/ipc/KeyboardLayoutSocket.cpp	2026-09-10 15:40:52.437959119 +0100
++++ b/applets/keyboardlayout/ipc/KeyboardLayoutSocket.cpp	2026-09-10 15:56:51.370382733 +0100
+@@ -3,7 +3,7 @@
+ 
+     SPDX-License-Identifier: GPL-2.0-or-later
+ */
+-
++#include <QFile>
+ #include "KeyboardLayoutSocket.h"
+ 
+ #include <QDataStream>
+@@ -33,7 +33,12 @@
+     connect(m_socket, &QLocalSocket::errorOccurred, this, &KeyboardLayoutSocket::onErrorOccurred);
+     connect(m_reconnectTimer, &QTimer::timeout, this, &KeyboardLayoutSocket::reconnect);
+ 
+-    m_socket->connectToServer(serverPath());
++    const QString path = serverPath();
++    if (QFile::exists(path)) {
++        m_socket->connectToServer(path);
++    } else {
++        m_reconnectTimer->start();
++    }
+ }
+ 
+ QString KeyboardLayoutSocket::serverPath()
+@@ -117,9 +122,18 @@
+ 
+ void KeyboardLayoutSocket::reconnect()
+ {
+-    if (m_socket) {
+-        m_socket->connectToServer(serverPath());
++    if (!m_socket || m_socket->state() != QLocalSocket::UnconnectedState) {
++        return;
+     }
++
++    const QString path = serverPath();
++
++    if (!QFile::exists(path)) {
++        return;
++    }
++
++    m_reconnectTimer->stop();
++    m_socket->connectToServer(path);
+ }
+ 
+ void KeyboardLayoutSocket::onReadyRead()
+@@ -221,10 +235,19 @@
+ 
+ void KeyboardLayoutSocket::onErrorOccurred(QLocalSocket::LocalSocketError socketError)
+ {
+-    Q_UNUSED(socketError);
+-    qCWarning(KCM_KEYBOARD) << "KeyboardLayoutSocket error:" << (m_socket ? m_socket->errorString() : QString());
++    const bool expectedTransientError =
++        socketError == QLocalSocket::ServerNotFoundError ||
++        socketError == QLocalSocket::ConnectionRefusedError;
++
++    if (!expectedTransientError) {
++        qCWarning(KCM_KEYBOARD)
++            << "KeyboardLayoutSocket error:"
++            << (m_socket ? m_socket->errorString() : QString());
++    }
++
+     if (m_socket) {
+         m_socket->abort();
+     }
++
+     m_reconnectTimer->start();
+ }
