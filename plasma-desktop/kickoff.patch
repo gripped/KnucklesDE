@@ -1,0 +1,23 @@
+diff --color -Nuar a/applets/kickoff/PlacesPage.qml b/applets/kickoff/PlacesPage.qml
+--- a/applets/kickoff/PlacesPage.qml	2026-09-11 08:37:01.156694245 +0100
++++ b/applets/kickoff/PlacesPage.qml	2026-09-11 09:52:24.138144783 +0100
+@@ -72,13 +72,14 @@
+             placesCategoryModel.setProperty(2, "display", i18nc("category in Places sidebar", "Frequently Used"))
+             updateComputerDecoration()
+         }
+-        Connections {
+-            target: KickoffSingleton.lidDetector
+-            function onLidPresentChanged() {
+-                placesCategoryModel.updateComputerDecoration()
+-            }
++    }
++    Connections {
++        target: KickoffSingleton.lidDetector
++        function onLidPresentChanged() {
++            placesCategoryModel.updateComputerDecoration()
+         }
+     }
++
+     // NormalPage doesn't get destroyed when deactivated, so the binding uses
+     // StackView.status and visible. This way the bindings are reset when
+     // NormalPage is Activated again.
