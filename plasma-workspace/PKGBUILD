@@ -5,7 +5,7 @@
 
 pkgname=(plasma-workspace)
 _pkgname=sonic-workspace
-pkgver=6.7.4
+pkgver=6.7.5
 _dirver=$(echo $pkgver | cut -d. -f1-3)
 pkgrel=1
 pkgdesc='KDE Plasma Workspace'
@@ -119,13 +119,8 @@ makedepends=(baloo
              plasma-wayland-protocols
              qcoro)
 groups=(plasma)
-# source=("$pkgname-$pkgver.tar.gz::${url}/archive/refs/tags/${pkgver}.tar.gz"
-  source=("git+https://github.com/Sonic-DE/sonic-workspace.git"
-        'revert.patch'
-        'c0dfeca-reverse.patch')
-sha256sums=('SKIP'
-            'b44053bd8f3e2426604b33d46bb4b3d103ea06c80de23d49b788a1ce4a7e4340'
-            'f2d808c26ecf6c9dada24e3d48855a5611c651da6c27331875e5d12eba64ea6f')
+source=("git+https://github.com/Sonic-DE/sonic-workspace.git")
+sha256sums=('SKIP')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
               'D07BD8662C56CB291B316EB2F5675605C74E02CF'  # David Edmundson <davidedmundson@kde.org>

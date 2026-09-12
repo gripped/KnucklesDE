@@ -4,7 +4,7 @@
 
 pkgname=plasma-desktop
 _pkgname=sonic-desktop-interface
-pkgver=6.7.4.2
+pkgver=6.7.5
 _dirver=$(echo $pkgver | cut -d. -f1-3)
 pkgrel=1
 pkgdesc='KDE Plasma Desktop'
@@ -98,12 +98,10 @@ makedepends=(extra-cmake-modules
 groups=(plasma)
 source=("git+https://github.com/Sonic-DE/sonic-desktop-interface.git"
                 '0001-add-explicit-input-backend-options.patch'
-                'keyboard.patch'
-                'kickoff.patch')
+                'keyboard.patch')
 sha256sums=('SKIP'
             '63afec950ae88f89fcf206b8e40aab3dcc4f5a4df6f456b31ad3ebf20158f440'
-            '3ac39acc09a78c9d1bb6f34cc8a151b2ab65faff81861c286967c11e5f6f22db'
-            'a9b52b3192d76832314fc20c2608d9bbed35bd27c55c9301fb9771abadf48deb')
+            '3ac39acc09a78c9d1bb6f34cc8a151b2ab65faff81861c286967c11e5f6f22db')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
               'D07BD8662C56CB291B316EB2F5675605C74E02CF'  # David Edmundson <davidedmundson@kde.org>
@@ -117,7 +115,6 @@ prepare() {
   git revert --no-edit 01958b3
   patch -Np1 < "$srcdir/0001-add-explicit-input-backend-options.patch"
   patch -Np1 < "$srcdir/keyboard.patch"
-  patch -Np1 < "$srcdir/kickoff.patch"
 }
 
 build() {
