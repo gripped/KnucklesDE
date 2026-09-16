@@ -102,7 +102,6 @@ depends=(accountsservice
          qt6-virtualkeyboard
          sh
          solid
-         systemd-libs
          wayland
          xcb-util
          xcb-util-cursor

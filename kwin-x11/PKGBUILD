@@ -61,7 +61,6 @@ depends=(aurorae
          qt6-sensors
          qt6-svg
          qt6-tools
-         systemd-libs
          wayland
          xcb-util-cursor
          xcb-util-keysyms
@@ -83,12 +82,12 @@ validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell
 prepare() {
   cd "$_pkgname"
   git config user.email "you@example.com"
-  git config user.name "Your Name"
-  git revert --no-edit 556c419
-  git revert --no-edit ed89a72
+  git config  user.name "Your Name"
+  git revert --no-edit  556c419
+  git revert --no-edit  ed89a72
   git revert --no-edit e6f6f2e
-  git revert --no-edit 018d419
-  git revert --no-edit 002d618
+  git revert --no-edit  018d419
+  git revert --no-edit  002d618
 }
 
 build() {

@@ -70,7 +70,6 @@ depends=(attica
          sdl2
          solid
          sonnet
-         systemd-libs
          systemsettings
          wayland
          xcb-util-keysyms
