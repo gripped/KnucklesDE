@@ -1,0 +1,11 @@
+diff --color -Nuar a/kcms/touchpad/kcm.cpp b/kcms/touchpad/kcm.cpp
+--- a/kcms/touchpad/kcm.cpp	2026-10-21 09:44:10.950234126 +0100
++++ b/kcms/touchpad/kcm.cpp	2026-10-21 09:47:31.380334912 +0100
+@@ -130,6 +130,7 @@
+     if (!backend) {
+         return;
+     }
++
+     if (backend->getMode() == TouchpadInputBackendMode::XLibinput
+ #if HAVE_SYNAPTICS
+         || backend->getMode() == TouchpadInputBackendMode::XSynaptics

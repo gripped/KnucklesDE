@@ -4,7 +4,7 @@
 
 pkgname=kwin-x11
 _pkgname=sonic-win
-pkgver=6.7.5
+pkgver=6.8.1
 _dirver=$(echo $pkgver | cut -d. -f1-3)
 pkgrel=1
 pkgdesc='An easy to use, but flexible, X Window Manager'
@@ -87,7 +87,7 @@ prepare() {
   git revert --no-edit  ed89a72
   git revert --no-edit e6f6f2e
   git revert --no-edit  018d419
-  git revert --no-edit  002d618
+  git revert -X ours --no-edit  002d618
 }
 
 build() {

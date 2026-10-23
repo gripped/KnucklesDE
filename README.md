@@ -1,7 +1,12 @@
 Build and install in this order  
-kwin-x11  
+kwin_x11  
+libplasma  
 plasma-workspace  
 plasma-desktop  
+libkscreen  
+kscreen  
+kglobalacceld  
+kscreenlocker  
+The first time build and install plasma-workspace again.  
+To be extra cautious build and install them all again.
 
-ATM you need to `pacman -Rdd plasma-x11-session` before installing plasma-workspace.  
-Won't be needed once kde remove it in 6.8

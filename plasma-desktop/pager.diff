@@ -1,0 +1,21 @@
+diff --color -Naur a/applets/pager/package/contents/ui/main.qml b/applets/pager/package/contents/ui/main.qml
+--- a/applets/pager/qml/main.qml	2023-12-05 19:21:12.000000000 +0000
++++ b/applets/pager/qml/main.qml	2024-03-04 00:21:53.516680766 +0000
+@@ -27,7 +27,7 @@
+         / ((pagerModel.pagerItemSize.height * pagerItemGrid.effectiveRows)
+         + ((pagerItemGrid.effectiveRows * pagerItemGrid.spacing) - pagerItemGrid.spacing)))
+ 
+-    Layout.minimumWidth: !root.vertical ? Math.floor(height * aspectRatio) : 1
++    Layout.minimumWidth: !root.vertical ? Math.floor(height * aspectRatio / 3) : 1
+     Layout.minimumHeight: root.vertical ? Math.floor(width / aspectRatio) : 1
+ 
+     Layout.maximumWidth: !root.vertical ? Math.floor(height * aspectRatio) : Infinity
+@@ -317,7 +317,7 @@
+ 
+         property int innerSpacing: (effectiveRows - 1) * spacing
+         property int rowHeight: Math.floor((root.height - innerSpacing) / effectiveRows)
+-        property int columnWidth: Math.floor(rowHeight * pagerItemSizeRatio)
++        property int columnWidth: Math.floor(rowHeight * pagerItemSizeRatio) / 3
+ 
+         Repeater {
+             id: repeater

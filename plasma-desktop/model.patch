@@ -1,0 +1,12 @@
+diff --color -Nuar a/kcms/kded/filterproxymodel.h b/kcms/kded/filterproxymodel.h
+--- a/kcms/kded/filterproxymodel.h	2026-09-19 16:33:25.381150191 +0100
++++ b/kcms/kded/filterproxymodel.h	2026-09-19 16:38:34.673147822 +0100
+@@ -10,6 +10,8 @@
+ 
+ #include "kcmkded.h"
+ 
++Q_MOC_INCLUDE("modulesmodel.h")
++
+ class FilterProxyModel : public QSortFilterProxyModel
+ {
+     Q_OBJECT

@@ -5,7 +5,7 @@
 
 pkgname=(plasma-workspace)
 _pkgname=sonic-workspace
-pkgver=6.7.5
+pkgver=6.8.1
 _dirver=$(echo $pkgver | cut -d. -f1-3)
 pkgrel=1
 pkgdesc='KDE Plasma Workspace'
@@ -134,7 +134,10 @@ prepare() {
   git revert --no-edit be4a7cc
   git revert --no-edit f724786
   git revert --no-edit c76f48c
-  git revert --no-edit c0dfeca
+  if ! git revert -X ours --no-edit c0dfeca; then
+    git add -- libklookandfeel/themecomponentresolver.cpp
+    GIT_EDITOR=true git revert --continue
+  fi
 }
 
 build() {
