@@ -122,7 +122,7 @@ prepare() {
   patch -Np1 < "$srcdir/keyboard.patch"
   patch -Np1 < "$srcdir/model.patch"
   patch -Np1 < "$srcdir/synaptics.patch"
-  patch -Np1 < "$srcdir/pager.diff"   # Personal
+  # patch -Np1 < "$srcdir/pager.diff"   # Personal
   
 }
 
