@@ -67,5 +67,5 @@ build() {
 
 package() {
   DESTDIR="$pkgdir" cmake --install build
-  ln -s "$pkgdir"/usr/lib/libPlasma.so.6.8.0 "$pkgdir"/usr/lib/libPlasma.so.8
+  ln -s libPlasma.so.6.8.0 "$pkgdir"/usr/lib/libPlasma.so.8
 }
