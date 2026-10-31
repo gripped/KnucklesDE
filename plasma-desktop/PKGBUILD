@@ -141,7 +141,7 @@ prepare() {
   patch -Np1 < "$srcdir/6bc2da0.patch"
   patch -Np1 < "$srcdir/1155348.patch"
   patch -Np1 < "$srcdir/model.patch"
-  patch -Np1 < "$srcdir/pager.diff"   # Personal
+  # patch -Np1 < "$srcdir/pager.diff"   # Personal
 }
 
 build() {
