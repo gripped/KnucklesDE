@@ -2,7 +2,8 @@
 
 pkgname=kscreenlocker
 _pkgname=sonic-screenlocker
-pkgver=6.8.1
+_commit=0ed103d
+pkgver=6.8.2
 _dirver=$(echo $pkgver | cut -d. -f1-3)
 pkgrel=1
 pkgdesc='Library and components for secure lock screen architecture'
@@ -40,7 +41,7 @@ depends=(glibc
 makedepends=(extra-cmake-modules
              kdoctools)
 groups=(plasma)
-source=("git+https://github.com/Sonic-DE/sonic-screenlocker.git"
+source=("git+https://github.com/Sonic-DE/sonic-screenlocker.git#commit=$_commit"
         kde.pam
         kde-fingerprint.pam 
         kde-smartcard.pam)
@@ -52,6 +53,15 @@ validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
               'D07BD8662C56CB291B316EB2F5675605C74E02CF'  # David Edmundson <davidedmundson@kde.org>
               '1FA881591C26B276D7A5518EEAAF29B42A678C20') # Marco Martin <notmart@gmail.com>
+
+prepare() {
+  cd "$_pkgname"
+  git config user.email "you@example.com"
+  git config  user.name "Your Name"
+  git revert --no-edit  0ed103d
+  git revert --no-edit  7e1ae4b
+  
+}
 
 build() {
   cmake -B build  -S $_pkgname \

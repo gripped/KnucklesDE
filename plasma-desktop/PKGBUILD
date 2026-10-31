@@ -4,7 +4,8 @@
 
 pkgname=plasma-desktop
 _pkgname=sonic-desktop-interface
-pkgver=6.8.1
+_commit=513aedf
+pkgver=6.8.2
 _dirver=$(echo $pkgver | cut -d. -f1-3)
 pkgrel=1
 pkgdesc='KDE Plasma Desktop'
@@ -95,14 +96,18 @@ makedepends=(extra-cmake-modules
              xf86-input-libinput
              xorg-server-devel)
 groups=(plasma)
-source=("git+https://github.com/Sonic-DE/sonic-desktop-interface.git"
+source=("git+https://github.com/Sonic-DE/sonic-desktop-interface.git#commit=$_commit"
                 '0001-add-explicit-input-backend-options.patch'
                 'keyboard.patch'
+                '6bc2da0.patch'
+                '1155348.patch'
                 'model.patch'
                 'pager.diff')
-sha256sums=('SKIP'
+sha256sums=('e66394e0f823b041d2fbe5cb48db5350b9cf3bf5301d924e38fcc2e97814a458'
             '63afec950ae88f89fcf206b8e40aab3dcc4f5a4df6f456b31ad3ebf20158f440'
             '3ac39acc09a78c9d1bb6f34cc8a151b2ab65faff81861c286967c11e5f6f22db'
+            '8d2374f8fc40bd34485d7c15fc991e19d8c03b314e5c36746b2c5b2141f76bee'
+            '1aa0f0e7b55a499e2ebb1081e90cb72d607c6c7bfe93abf3bc83baf86d6d0494'
             'fdd03f85e6f7f79e119ea6e9b4605c9f58792adbd2f1ed8dc34b1020bbebfb99'
             '075fe7b23148e4257988574f5956724124941052ab42db68759dc0fce1d3cdec')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
@@ -113,14 +118,30 @@ validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell
 prepare() {
   cd "$_pkgname"
   git config user.email "you@example.com"
-  git config user.name "Your Name" 
+  git config user.name "Your Name"
+  
+  git revert --no-edit 513aedf
+  git revert --no-edit 1155348
+  git revert --no-edit 6bc2da0
+  if ! git revert --no-edit 6717767; then
+    unmerged=$(git diff --name-only --diff-filter=U)
+    if [[ "$unmerged" != "kcms/keyboard/keyboard_daemon.cpp" ]]; then
+      echo "Unexpected conflict while reverting 6717767:"
+      git status --short
+      return 1
+    fi
+    git checkout --ours -- kcms/keyboard/keyboard_daemon.cpp
+    git add -- kcms/keyboard/keyboard_daemon.cpp
+    GIT_EDITOR=true git revert --continue
+  fi
   git revert --no-edit e764b75
   git revert --no-edit 01958b3
   patch -Np1 < "$srcdir/0001-add-explicit-input-backend-options.patch"
   patch -Np1 < "$srcdir/keyboard.patch"
+  patch -Np1 < "$srcdir/6bc2da0.patch"
+  patch -Np1 < "$srcdir/1155348.patch"
   patch -Np1 < "$srcdir/model.patch"
-  # patch -Np1 < "$srcdir/pager.diff"   # Personal
-  
+  patch -Np1 < "$srcdir/pager.diff"   # Personal
 }
 
 build() {

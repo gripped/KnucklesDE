@@ -4,7 +4,8 @@
 
 pkgname=libplasma
 _pkgname=sonic-interface-libraries
-pkgver=6.8.1
+_commit=75564e0
+pkgver=6.8.2
 _dirver=$(echo $pkgver | cut -d. -f1-3)
 pkgrel=1
 pkgdesc='Plasma library and runtime components'
@@ -43,7 +44,7 @@ makedepends=(extra-cmake-modules
 conflicts=(plasma-framework)
 replaces=(plasma-framework)
 groups=(plasma)
-source=("git+https://github.com/Sonic-DE/sonic-interface-libraries.git")
+source=("git+https://github.com/Sonic-DE/sonic-interface-libraries.git#commit=$_commit")
 sha256sums=('SKIP')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>
               '0AAC775BB6437A8D9AF7A3ACFE0784117FBCE11D'  # Bhushan Shah <bshah@kde.org>
@@ -54,9 +55,18 @@ prepare() {
   cd "$_pkgname"
   git config user.email "you@example.com"
   git config  user.name "Your Name"
+  git revert --no-edit 86587b3
   git revert --no-edit 725cacc
   git revert --no-edit 5454fd0
-  git revert --no-edit 1341128
+  if ! git revert --no-edit 1341128; then
+    git checkout --theirs -- autotests/themetest.cpp autotests/themetest.h
+    git add -- autotests/themetest.cpp autotests/themetest.h
+    git rm -f -- \
+        src/desktoptheme/default/CMakeLists.txt \
+        src/desktoptheme/silver-dark/colors \
+        src/desktoptheme/silver-light/colors
+    GIT_EDITOR=true git revert --continue
+  fi
 }
 
 build() {
@@ -67,5 +77,4 @@ build() {
 
 package() {
   DESTDIR="$pkgdir" cmake --install build
-  ln -s libPlasma.so.6.8.0 "$pkgdir"/usr/lib/libPlasma.so.8
 }

@@ -1,0 +1,233 @@
+diff --git a/kcms/keyboard/keyboard_daemon.cpp b/kcms/keyboard/keyboard_daemon.cpp
+index c705ca7edd..7287fffe80 100644
+--- a/kcms/keyboard/keyboard_daemon.cpp
++++ b/kcms/keyboard/keyboard_daemon.cpp
+@@ -65,7 +65,10 @@ KeyboardDaemon::KeyboardDaemon(QObject *parent, const QList<QVariant> &)
+     LayoutMemoryPersister layoutMemoryPersister(layoutMemory);
+     if (layoutMemoryPersister.restore()) {
+         if (layoutMemoryPersister.getGlobalLayout().isValid()) {
+-            X11Helper::setLayout(layoutMemoryPersister.getGlobalLayout());
++            const int index = X11Helper::getLayoutsList().indexOf(layoutMemoryPersister.getGlobalLayout());
++            if (index >= 0 && index < X11Helper::MAX_GROUP_COUNT) {
++                selectLayout(uint(index));
++            }
+         }
+     }
+ }
+@@ -73,7 +76,7 @@ KeyboardDaemon::KeyboardDaemon(QObject *parent, const QList<QVariant> &)
+ KeyboardDaemon::~KeyboardDaemon()
+ {
+     LayoutMemoryPersister layoutMemoryPersister(layoutMemory);
+-    layoutMemoryPersister.setGlobalLayout(X11Helper::getCurrentLayout());
++    layoutMemoryPersister.setGlobalLayout(currentLayoutUnit());
+     layoutMemoryPersister.save();
+ 
+     delete m_ipcServer;
+@@ -94,6 +97,7 @@ void KeyboardDaemon::configureKeyboard()
+     keyboardSettings->sharedConfig()->reparseConfiguration();
+     keyboardConfig->load();
+     XkbHelper::initializeKeyboardLayouts(*keyboardConfig);
++    layoutSelection.reset();
+     layoutMemory.configChanged();
+ 
+     unregisterShortcut();
+@@ -121,7 +125,7 @@ void KeyboardDaemon::registerShortcut()
+             setLastUsedLayoutValue(getLayout());
+             switchToNextLayout();
+ 
+-            LayoutUnit newLayout = X11Helper::getCurrentLayout();
++            LayoutUnit newLayout = currentLayoutUnit();
+             QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
+                                                            QStringLiteral("/org/kde/osdService"),
+                                                            QStringLiteral("org.kde.osdService"),
+@@ -139,7 +143,7 @@ void KeyboardDaemon::registerShortcut()
+                 setLayout(*lastUsedLayout);
+             }
+ 
+-            LayoutUnit newLayout = X11Helper::getCurrentLayout();
++            LayoutUnit newLayout = currentLayoutUnit();
+             QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
+                                                            QStringLiteral("/org/kde/osdService"),
+                                                            QStringLiteral("org.kde.osdService"),
+@@ -207,15 +211,23 @@ void KeyboardDaemon::registerListeners()
+         connect(layoutMapDebounce, &QTimer::timeout, this, [this]() {
+             keyboardSettings->sharedConfig()->reparseConfiguration();
+             keyboardConfig->load();
++            layoutSelection.reset();
+             layoutMemory.layoutMapChanged();
+             Q_EMIT layoutListChanged();
+             broadcastLayoutsChanged();
+         });
+     }
+ 
++    // Watch the config directory too: a user who has never configured layouts
++    // has no kxkbrc yet, and the file can't be watched until it exists.
++    const QString configDir = QFileInfo(kxkbrc).absolutePath();
++    if (!keyboardFileWatcher->directories().contains(configDir) && !keyboardFileWatcher->addPath(configDir)) {
++        qCWarning(KCM_KEYBOARD) << "Failed to watch the config directory" << configDir << "; a kxkbrc created later will be missed";
++    }
++
+     if (!keyboardFileWatcher->files().contains(kxkbrc)) {
+         if (!keyboardFileWatcher->addPath(kxkbrc)) {
+-            qCWarning(KCM_KEYBOARD) << "Failed to watch kxkbrc at" << kxkbrc;
++            qCDebug(KCM_KEYBOARD) << "kxkbrc does not exist yet at" << kxkbrc << "; waiting for it to be created";
+         } else {
+             qCDebug(KCM_KEYBOARD) << "Watching kxkbrc at" << kxkbrc;
+         }
+@@ -321,7 +333,7 @@ void KeyboardDaemon::layoutChangedSlot()
+ void KeyboardDaemon::switchToNextLayout()
+ {
+     setLastUsedLayoutValue(getLayout());
+-    X11Helper::scrollLayouts(1);
++    scrollLayouts(1);
+     Q_EMIT layoutChanged(getLayout());
+     broadcastLayoutChanged(getLayout());
+ }
+@@ -329,11 +341,44 @@ void KeyboardDaemon::switchToNextLayout()
+ void KeyboardDaemon::switchToPreviousLayout()
+ {
+     setLastUsedLayoutValue(getLayout());
+-    X11Helper::scrollLayouts(-1);
++    scrollLayouts(-1);
+     Q_EMIT layoutChanged(getLayout());
+     broadcastLayoutChanged(getLayout());
+ }
+ 
++void KeyboardDaemon::scrollLayouts(int delta)
++{
++    // Count from the selected layout, not the X group, so stepping off a
++    // layout that X merged into an earlier group still reaches the next one.
++    const int size = X11Helper::getLayoutsList().size();
++    if (size == 0) {
++        return;
++    }
++    const int index = ((int(getLayout()) + delta) % size + size) % size;
++    selectLayout(uint(index));
++}
++
++bool KeyboardDaemon::selectLayout(uint index)
++{
++    if (!X11Helper::setGroup(index)) {
++        qCWarning(KCM_KEYBOARD) << "Could not switch X to layout" << index;
++        return false;
++    }
++    const uint xGroup = X11Helper::getGroup();
++    if (xGroup != index) {
++        qCDebug(KCM_KEYBOARD) << "X merged layout" << index << "into group" << xGroup << "because their keymaps are identical";
++    }
++    layoutSelection.select(index, xGroup);
++    return true;
++}
++
++LayoutUnit KeyboardDaemon::currentLayoutUnit() const
++{
++    const QList<LayoutUnit> layouts = X11Helper::getLayoutsList();
++    const uint index = getLayout();
++    return index < uint(layouts.size()) ? layouts.at(index) : X11Helper::getCurrentLayout();
++}
++
+ void KeyboardDaemon::broadcastLayoutsChanged()
+ {
+     if (m_ipcServer) {
+@@ -396,12 +441,12 @@ bool KeyboardDaemon::setLayout(uint index)
+         index = indexOfLastMainLayoutInXKB;
+     }
+     setLastUsedLayoutValue(getLayout());
+-    return X11Helper::setGroup(index);
++    return selectLayout(index);
+ }
+ 
+ uint KeyboardDaemon::getLayout() const
+ {
+-    return X11Helper::getGroup();
++    return layoutSelection.current(X11Helper::getGroup());
+ }
+ 
+ QList<LayoutNames> KeyboardDaemon::getLayoutsList() const
+diff --git a/kcms/keyboard/keyboard_daemon.h b/kcms/keyboard/keyboard_daemon.h
+index 2e44159bf5..ac2c30d4d1 100644
+--- a/kcms/keyboard/keyboard_daemon.h
++++ b/kcms/keyboard/keyboard_daemon.h
+@@ -21,6 +21,33 @@ class KeyboardConfig;
+ class KeyboardSettings;
+ class KeyboardIpcServer;
+ 
++// Remembers which configured layout the user selected. X merges layouts whose
++// keymaps are identical (us and au, for example) into one group and wraps a
++// locked group past the last real one back into range, so the X group alone
++// can't tell such layouts apart.
++class LayoutSelection {
++public:
++    void select(uint layout, uint xGroup)
++    {
++        m_layout = layout;
++        m_xGroup = xGroup;
++    }
++    void reset()
++    {
++        m_layout.reset();
++    }
++    // The selected layout while X still sits on the group it landed on;
++    // otherwise something else moved X, and X's group is the truth.
++    uint current(uint xGroup) const
++    {
++        return m_layout && xGroup == m_xGroup ? *m_layout : xGroup;
++    }
++
++private:
++    std::optional<uint> m_layout;
++    uint m_xGroup = 0;
++};
++
+ class Q_DECL_EXPORT KeyboardDaemon : public KDEDModule
+ {
+     Q_OBJECT
+@@ -31,6 +58,7 @@ class Q_DECL_EXPORT KeyboardDaemon : public KDEDModule
+     XInputEventNotifier *xEventNotifier;
+     LayoutMemory layoutMemory;
+     std::optional<uint> lastUsedLayout;
++    LayoutSelection layoutSelection;
+ 
+     QFileSystemWatcher *keyboardFileWatcher = nullptr;
+     QTimer *keyboardFileDebounce = nullptr;
+@@ -44,6 +72,9 @@ class Q_DECL_EXPORT KeyboardDaemon : public KDEDModule
+     void unregisterListeners();
+     void unregisterShortcut();
+     void setLastUsedLayoutValue(uint newValue);
++    bool selectLayout(uint index);
++    void scrollLayouts(int delta);
++    LayoutUnit currentLayoutUnit() const;
+ 
+     void broadcastLayoutsChanged();
+     void broadcastLayoutChanged(uint index);
+diff --git a/kcms/keyboard/tests/keyboard_daemon_test.cpp b/kcms/keyboard/tests/keyboard_daemon_test.cpp
+index c9f8891177..a95ed68095 100644
+--- a/kcms/keyboard/tests/keyboard_daemon_test.cpp
++++ b/kcms/keyboard/tests/keyboard_daemon_test.cpp
+@@ -119,6 +119,26 @@ private Q_SLOTS:
+         QCOMPARE(spy.count(), 1);
+     }
+ 
++    // X merges layouts with identical keymaps into one group, so the selected
++    // layout must be reported even when X's group stays put.
++    void testLayoutSelectionSurvivesMergedGroups()
++    {
++        LayoutSelection selection;
++        QCOMPARE(selection.current(0), 0u);
++        QCOMPARE(selection.current(2), 2u);
++
++        // Layout 1 selected, but X merged it into group 0.
++        selection.select(1, 0);
++        QCOMPARE(selection.current(0), 1u);
++
++        // Something else moved X to another group: follow X.
++        QCOMPARE(selection.current(2), 2u);
++
++        // A new layout list invalidates the selection.
++        selection.reset();
++        QCOMPARE(selection.current(0), 0u);
++    }
++
+     // A user who has never configured layouts has no kxkbrc when the daemon
+     // starts; the first save must still be picked up, and so must later ones.
+     void testKxkbrcCreatedLaterIsWatched()

@@ -1,0 +1,18 @@
+diff --color -Nuar a/kcms/keyboard/keyboard_daemon.cpp b/kcms/keyboard/keyboard_daemon.cpp
+--- a/kcms/keyboard/keyboard_daemon.cpp	2026-10-31 10:33:56.237237615 +0000
++++ b/kcms/keyboard/keyboard_daemon.cpp	2026-10-31 10:40:11.206776011 +0000
+@@ -126,10 +126,10 @@
+             switchToNextLayout();
+ 
+             LayoutUnit newLayout = currentLayoutUnit();
+-            QDBusMessage msg = QDBusMessage::createMethodCall(QStringLiteral("org.sonicde.sonicshell"),
+-                                                              QStringLiteral("/org/sonicde/osdService"),
+-                                                              QStringLiteral("org.sonicde.osdService"),
+-                                                              QStringLiteral("kbdLayoutChanged"));
++            QDBusMessage msg =  QDBusMessage::createMethodCall(QStringLiteral("org.kde.plasmashell"),
++                                                            QStringLiteral("/org/kde/osdService"),
++                                                            QStringLiteral("org.kde.osdService"),
++                                                            QStringLiteral("kbdLayoutChanged")
+             msg << Flags::getLongText(newLayout);
+             QDBusConnection::sessionBus().asyncCall(msg);
+         });
